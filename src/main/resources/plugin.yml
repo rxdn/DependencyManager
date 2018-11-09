@@ -1,0 +1,3 @@
+name: DependencyManager
+main: com.perkelle.dev.dependencymanager.DependencyManagerPlugin
+version: 1.0
