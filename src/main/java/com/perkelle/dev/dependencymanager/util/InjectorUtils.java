@@ -23,7 +23,8 @@ public enum InjectorUtils {
         this.addUrlMethod = method;
     }
 
-    public void loadJar(File src) throws MalformedURLException, IllegalAccessException, InvocationTargetException {
+    public void loadJar(File src) throws MalformedURLException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        ensureInitiated();
         addUrlMethod.invoke(classLoader, src.toURI().toURL());
     }
 }
