@@ -23,6 +23,11 @@ public class RemoteUrlDependency extends Dependency {
 
     @Override
     protected String getLocalName() {
-        return String.format("url:%s", url);
+        String fileName = String.format("url:%s", url);
+        fileName = fileName.replace("https://", "");
+        fileName = fileName.replace("http://", "");
+        fileName = fileName.replace("/", ".");
+
+        return fileName;
     }
 }

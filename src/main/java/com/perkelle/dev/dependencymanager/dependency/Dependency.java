@@ -59,7 +59,7 @@ public abstract class Dependency {
 
     protected abstract String getLocalName();
 
-    protected void download(Plugin owner, File dest, Consumer<File> onComplete, Consumer<Exception> onError) {
+    private void download(Plugin owner, File dest, Consumer<File> onComplete, Consumer<Exception> onError) {
         ContextUtils.runAsync(owner, () -> {
             try {
                 URL url = buildUrl();
