@@ -29,9 +29,7 @@ public abstract class Dependency {
 
     public void load(Runnable onComplete, Consumer<Exception> onError) {
         try {
-            Plugin core = JavaPlugin.getPlugin(DependencyManagerPlugin.class);
-
-            File cacheFolder = new File(core.getDataFolder(), "cache");
+            File cacheFolder = new File(owner, "cache");
             if (!cacheFolder.exists())
                 cacheFolder.mkdir();
 
