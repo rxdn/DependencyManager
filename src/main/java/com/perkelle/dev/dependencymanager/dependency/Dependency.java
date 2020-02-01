@@ -7,7 +7,9 @@ import me.lucko.jarrelocator.JarRelocator;
 import me.lucko.jarrelocator.Relocation;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -34,7 +36,7 @@ public abstract class Dependency {
         return this;
     }
 
-    protected abstract URL buildUrl() throws MalformedURLException;
+    protected abstract URL buildUrl() throws IOException, ParserConfigurationException, SAXException;
 
     public void load(Runnable onComplete, Consumer<Exception> onError) {
         try {
@@ -95,7 +97,7 @@ public abstract class Dependency {
                 downloadDest.delete();
 
                 ContextUtils.runSync(owner, () -> onComplete.accept(dest));
-            } catch(IOException ex) {
+            } catch(IOException | ParserConfigurationException | SAXException ex) {
                 onError.accept(ex);
             }
         });
