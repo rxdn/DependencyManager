@@ -8,17 +8,11 @@ import java.net.URL;
 
 public class MavenCentralDependency extends Dependency  {
 
-    private final String rootUrl;
+    private final String rootUrl = "https://repo1.maven.org/maven2";
     private final String group, artifact, version;
 
-    public MavenCentralDependency(Plugin owner, String rootUrl, String group, String artifact, String version) {
+    public MavenCentralDependency(Plugin owner, String group, String artifact, String version) {
         super(owner);
-
-        if(rootUrl.endsWith("/")) {
-            this.rootUrl = rootUrl.substring(0, rootUrl.length() - 1);
-        } else {
-            this.rootUrl = rootUrl;
-        }
 
         this.group = group;
         this.artifact = artifact;
