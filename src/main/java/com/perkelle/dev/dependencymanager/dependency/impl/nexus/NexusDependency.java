@@ -39,12 +39,16 @@ public class NexusDependency extends Dependency {
         String groupSlashed = String.join("/", group.split("\\."));
 
         // Retrieve metadata
-        String metadataUrl = String.format("%s/%s/%s/%s/maven-metadata.xml", rootUrl, groupSlashed, artifact, version);
+        URL metadataUrl = new URL(String.format("%s/%s/%s/%s/maven-metadata.xml", rootUrl, groupSlashed, artifact, version));
+        Scanner scanner = new Scanner(metadataUrl.openStream());
+        String metadata = scanner.useDelimiter("\\A").next();
+        scanner.close(); // Make sure we close the stream
+
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setValidating(true);
         factory.setIgnoringElementContentWhitespace(true);
         DocumentBuilder builder = factory.newDocumentBuilder();
-        Document doc = builder.parse(metadataUrl);
+        Document doc = builder.parse(metadata);
 
         // Parse metadata
         Element versioning = (Element) doc.getElementsByTagName("versioning").item(0);
