@@ -30,6 +30,6 @@ public class BintrayDependency extends Dependency {
 
     @Override
     protected String getLocalName() {
-        return String.format("%s:%s:%s.jar", group, artifact, version);
+        return String.format("%s_%s_%s.jar", group, artifact, version);
     }
 }

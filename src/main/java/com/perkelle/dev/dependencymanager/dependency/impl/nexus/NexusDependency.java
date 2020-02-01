@@ -14,10 +14,11 @@ public class NexusDependency extends Dependency {
     public NexusDependency(Plugin owner, String rootUrl, String group, String artifact, String version) {
         super(owner);
 
-        if(rootUrl.endsWith("/"))
+        if(rootUrl.endsWith("/")) {
+            this.rootUrl = rootUrl.substring(0, rootUrl.length() - 2);
+        } else {
             this.rootUrl = rootUrl;
-        else
-            this.rootUrl = rootUrl + "/";
+        }
 
         this.group = group;
         this.artifact = artifact;
@@ -32,6 +33,6 @@ public class NexusDependency extends Dependency {
 
     @Override
     protected String getLocalName() {
-        return String.format("%s:%s:%s.jar", group, artifact, version);
+        return String.format("%s_%s_%s.jar", group, artifact, version);
     }
 }

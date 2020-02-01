@@ -51,7 +51,6 @@ public abstract class Dependency {
                 }
             });
 
-
             File cached = new File(cacheFolder, getLocalName());
             if(!cached.exists()) {
                 cached.createNewFile();

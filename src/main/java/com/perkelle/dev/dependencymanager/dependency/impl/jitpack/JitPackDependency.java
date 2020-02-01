@@ -29,6 +29,6 @@ public class JitPackDependency extends Dependency {
 
     @Override
     protected String getLocalName() {
-        return String.format("jitpack:%s:%s:%s.jar", user, repository, tag);
+        return String.format("jitpack_%s_%s_%s.jar", user, repository, tag);
     }
 }
