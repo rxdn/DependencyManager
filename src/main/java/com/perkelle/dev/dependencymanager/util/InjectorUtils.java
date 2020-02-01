@@ -1,5 +1,7 @@
 package com.perkelle.dev.dependencymanager.util;
 
+import org.bukkit.plugin.Plugin;
+
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -14,8 +16,8 @@ public enum InjectorUtils {
     private URLClassLoader classLoader;
     private Method addUrlMethod;
 
-    private void ensureInitiated() throws NoSuchMethodException {
-        classLoader = (URLClassLoader) Thread.currentThread().getContextClassLoader();
+    private void ensureInitiated(Plugin pl) throws NoSuchMethodException {
+        classLoader = (URLClassLoader) pl.getClass().getClassLoader();
 
         Method method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
         method.setAccessible(true);
@@ -23,8 +25,8 @@ public enum InjectorUtils {
         this.addUrlMethod = method;
     }
 
-    public void loadJar(File src) throws MalformedURLException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        ensureInitiated();
+    public void loadJar(Plugin pl, File src) throws MalformedURLException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        ensureInitiated(pl);
         addUrlMethod.invoke(classLoader, src.toURI().toURL());
     }
 }

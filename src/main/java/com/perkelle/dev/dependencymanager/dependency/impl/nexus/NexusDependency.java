@@ -11,10 +11,17 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class NexusDependency extends Dependency {
 
@@ -40,15 +47,42 @@ public class NexusDependency extends Dependency {
 
         // Retrieve metadata
         URL metadataUrl = new URL(String.format("%s/%s/%s/%s/maven-metadata.xml", rootUrl, groupSlashed, artifact, version));
-        Scanner scanner = new Scanner(metadataUrl.openStream());
-        String metadata = scanner.useDelimiter("\\A").next();
-        scanner.close(); // Make sure we close the stream
+        HttpURLConnection conn = (HttpURLConnection) metadataUrl.openConnection();
+        conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36 OPR/66.0.3515.44");
 
+        int responseCode = conn.getResponseCode();
+        if(responseCode == 403 || responseCode == 404) { // Metadata doesn't exist, pull jar straight away
+            conn.disconnect();
+            String jarName = String.format("%s-%s.jar", artifact, version);
+            return new URL(String.format("%s/%s/%s/%s/%s", rootUrl, groupSlashed, artifact, version, jarName));
+        }
+        else if(responseCode == 200) {
+            String metadata;
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                metadata = reader.lines().collect(Collectors.joining("\n"));
+            }
+            conn.disconnect();
+
+            String buildName = getBuildName(metadata);
+            if(buildName == null) {
+                throw new IOException("Build not found");
+            }
+
+            String jarName = String.format("%s-%s.jar", artifact, buildName);
+            return new URL(String.format("%s/%s/%s/%s/%s", rootUrl, groupSlashed, artifact, version, jarName));
+        }
+        else {
+            conn.disconnect();
+            throw new IOException(String.format("Error retrieving %s:%s:%s - Error code %d", group, artifact, version, responseCode));
+        }
+    }
+
+    protected String getBuildName(String metadata) throws IOException, ParserConfigurationException, SAXException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setValidating(true);
         factory.setIgnoringElementContentWhitespace(true);
         DocumentBuilder builder = factory.newDocumentBuilder();
-        Document doc = builder.parse(metadata);
+        Document doc = builder.parse(new ByteArrayInputStream(metadata.getBytes()));
 
         // Parse metadata
         Element versioning = (Element) doc.getElementsByTagName("versioning").item(0);
@@ -68,12 +102,7 @@ public class NexusDependency extends Dependency {
             buildName = snapshotVersion.getElementsByTagName("value").item(0).getTextContent();
         }
 
-        if(buildName == null) {
-            throw new IOException("Build not found");
-        }
-
-        String jarName = String.format("%s-%s.jar", artifact, buildName);
-        return new URL(String.format("%s/%s/%s/%s/%s", rootUrl, groupSlashed, artifact, version, jarName));
+        return buildName;
     }
 
     @Override

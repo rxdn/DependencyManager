@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.Channels;
@@ -25,7 +26,7 @@ import java.util.function.Consumer;
 public abstract class Dependency {
 
     private Plugin owner;
-    private Relocation[] rules = null;
+    private Relocation[] rules = new Relocation[]{};
 
     public Dependency(Plugin owner) {
         this.owner = owner;
@@ -46,7 +47,7 @@ public abstract class Dependency {
 
             Consumer<File> inject = (f) -> ContextUtils.runAsync(owner, () -> {
                 try {
-                    InjectorUtils.INSTANCE.loadJar(f);
+                    InjectorUtils.INSTANCE.loadJar(owner, f);
                     ContextUtils.runSync(owner, onComplete);
                 } catch(Exception ex) {
                     ContextUtils.runSync(owner, () -> onError.accept(ex));
@@ -54,6 +55,10 @@ public abstract class Dependency {
             });
 
             File cached = new File(cacheFolder, getLocalName());
+            if(cached.length() == 0) {
+                cached.delete();
+            }
+
             if(!cached.exists()) {
                 cached.createNewFile();
                 download(owner, cached, inject, onError);
@@ -71,15 +76,22 @@ public abstract class Dependency {
         ContextUtils.runAsync(owner, () -> {
             try {
                 // For relocations, we must download the jar, relocate deps and then move it to the dest
-                File temp = new File(new File(owner.getDataFolder(), "cache"), "temp");
-                if(!temp.exists()) {
-                    temp.mkdir();
+                File downloadDest;
+                if(rules.length > 0) {
+                    File temp = new File(new File(owner.getDataFolder(), "cache"), "temp");
+                    if(!temp.exists()) {
+                        temp.mkdir();
+                    }
+                    downloadDest = new File(temp, dest.getName());
+                } else {
+                    downloadDest = dest;
                 }
-                File downloadDest = new File(temp, dest.getName());
 
                 URL url = buildUrl();
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36 OPR/66.0.3515.44");
 
-                InputStream stream = url.openStream();
+                InputStream stream = conn.getInputStream();
                 ReadableByteChannel byteChan = Channels.newChannel(stream);
 
                 FileOutputStream fos = new FileOutputStream(downloadDest);
@@ -91,10 +103,11 @@ public abstract class Dependency {
                 stream.close();
 
                 // Relocate
-                JarRelocator relocator = new JarRelocator(downloadDest, dest, Arrays.asList(rules));
-                relocator.run();
-
-                downloadDest.delete();
+                if(rules.length > 0) {
+                    JarRelocator relocator = new JarRelocator(downloadDest, dest, Arrays.asList(rules));
+                    relocator.run();
+                    downloadDest.delete();
+                }
 
                 ContextUtils.runSync(owner, () -> onComplete.accept(dest));
             } catch(IOException | ParserConfigurationException | SAXException ex) {
