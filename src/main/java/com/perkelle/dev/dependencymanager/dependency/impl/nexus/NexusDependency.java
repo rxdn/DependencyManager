@@ -15,7 +15,7 @@ public class NexusDependency extends Dependency {
         super(owner);
 
         if(rootUrl.endsWith("/")) {
-            this.rootUrl = rootUrl.substring(0, rootUrl.length() - 2);
+            this.rootUrl = rootUrl.substring(0, rootUrl.length() - 1);
         } else {
             this.rootUrl = rootUrl;
         }
