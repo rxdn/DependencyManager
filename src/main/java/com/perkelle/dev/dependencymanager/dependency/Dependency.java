@@ -41,6 +41,9 @@ public abstract class Dependency {
 
     public void load(Runnable onComplete, Consumer<Exception> onError) {
         try {
+            if(!owner.getDataFolder().exists())
+                owner.getDataFolder().mkdir();
+
             File cacheFolder = new File(owner.getDataFolder(), "cache");
             if (!cacheFolder.exists())
                 cacheFolder.mkdir();
