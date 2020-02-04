@@ -65,9 +65,10 @@ public abstract class Dependency {
             if(!cached.exists()) {
                 cached.createNewFile();
                 download(owner, cached, inject, onError);
+            } else {
+                inject.accept(cached);
             }
 
-            inject.accept(cached);
         } catch(Exception ex) {
             onError.accept(ex);
         }
